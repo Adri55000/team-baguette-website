@@ -1,9 +1,13 @@
-
 services:
+  adminer:
+    ports:
+      - "127.0.0.1:8080:8080"
+
   backend:
+    ports:
+      - "127.0.0.1:8000:8000"
     volumes:
       - ./backend:/app
-
     command:
       - uvicorn
       - app.main:app
@@ -14,10 +18,8 @@ services:
       - --reload
       - --reload-dir
       - /app/app
-
     environment:
       WATCHFILES_FORCE_POLLING: "true"
-
 
   frontend:
     build:

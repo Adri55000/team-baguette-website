@@ -1,3 +1,6 @@
+
+name: team-baguette-v2-prod
+
 services:
   frontend:
     build:
