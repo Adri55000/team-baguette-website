@@ -1,12 +1,14 @@
 
 from fastapi import FastAPI, HTTPException
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
-import os
-import psycopg
+from app.core.database import engine
+
 
 app = FastAPI(
     title="Team Baguette API",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 
@@ -15,31 +17,22 @@ def health():
     return {
         "status": "ok",
         "service": "team-baguette-backend",
-        "reload": "active"
     }
 
 
 @app.get("/api/health/db")
 def database_health():
     try:
-        with psycopg.connect(
-            host=os.environ["POSTGRES_HOST"],
-            dbname=os.environ["POSTGRES_DB"],
-            user=os.environ["POSTGRES_USER"],
-            password=os.environ["POSTGRES_PASSWORD"],
-            connect_timeout=3
-        ) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
-                cursor.fetchone()
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
 
         return {
             "status": "ok",
-            "database": "connected"
+            "database": "connected",
         }
 
-    except psycopg.OperationalError:
+    except SQLAlchemyError:
         raise HTTPException(
             status_code=503,
-            detail="Database unavailable"
+            detail="Database unavailable",
         )
