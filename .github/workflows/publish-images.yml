@@ -1,0 +1,54 @@
+
+name: Publish Team Baguette V2 images
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Build and publish ARM64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v6
+
+      - name: Activer ARM64
+        uses: docker/setup-qemu-action@v4
+
+      - name: Configurer Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Connexion a GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construire et publier le backend
+        uses: docker/build-push-action@v7
+        with:
+          context: ./backend
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ghcr.io/adri55000/tb-v2-backend:dev
+            ghcr.io/adri55000/tb-v2-backend:sha-${{ github.sha }}
+
+      - name: Construire et publier le frontend
+        uses: docker/build-push-action@v7
+        with:
+          context: ./frontend
+          target: production
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ghcr.io/adri55000/tb-v2-frontend:dev
+            ghcr.io/adri55000/tb-v2-frontend:sha-${{ github.sha }}
