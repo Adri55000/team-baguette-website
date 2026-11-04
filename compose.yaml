@@ -2,7 +2,7 @@ name: team-baguette-v2
 
 services:
   db:
-    image: postgres:18
+    image: postgres:18@sha256:3a4264520e121176619f54ff867d12774bc81e95e7b84db58d63bccdb6144b81
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB manquant}
@@ -12,7 +12,7 @@ services:
       - postgres_data:/var/lib/postgresql
 
   adminer:
-    image: adminer:latest
+    image: adminer:latest@sha256:cdb779fc54c22ce68a2d32a6053d3cd7ec9a5b912d2f20a0e3398c45e24f19b4
     restart: unless-stopped
     profiles:
       - tools
