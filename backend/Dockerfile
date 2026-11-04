@@ -11,4 +11,10 @@ COPY resources/ ./resources/
 COPY migrations/ ./migrations/
 COPY alembic.ini ./alembic.ini
 
+# Exécuter le backend avec un utilisateur non privilégié
+RUN groupadd --gid 10001 appuser \
+    && useradd --uid 10001 --gid appuser --create-home appuser
+
+USER appuser
+
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

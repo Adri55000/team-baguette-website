@@ -1,0 +1,17 @@
+# Secrets et configurations locales
+**/.env
+**/.env.*
+
+# Environnements Python locaux
+**/.venv
+**/venv
+
+# Fichiers temporaires Python
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.ruff_cache
+
+# Métadonnées Git et journaux
+.git
+**/*.log

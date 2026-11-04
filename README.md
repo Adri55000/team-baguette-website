@@ -176,6 +176,17 @@ docker compose --env-file .env.prod -f compose.yaml -f compose.prod.yaml restart
 
 La résolution durable de ce cas sera examinée avant déploiement public.
 
+## Sauvegardes et restaurations locales
+
+Les environnements DEV et PROD locale disposent d'un script
+PowerShell de sauvegarde PostgreSQL et du stockage persistant.
+
+Les procédures, les tests de restauration et leurs limites
+sont documentés dans [Sauvegardes locales](docs/sauvegardes-locales.md).
+
+L'automatisation et la conservation des sauvegardes sur le
+Raspberry Pi seront préparées lors du déploiement.
+
 ## Base de données et Alembic
 
 Le moteur et la base SQLAlchemy partagée se trouvent dans `backend/app/infrastructure/database/database.py`. Alembic utilise la même configuration depuis `backend/migrations/env.py`.
