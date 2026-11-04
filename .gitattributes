@@ -1,0 +1,19 @@
+# Fins de ligne LF pour tous les fichiers texte
+* text=auto eol=lf
+
+# Fichiers binaires
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.zip binary
+*.pdf binary
+
+# Scripts batch Windows
+*.bat text eol=crlf
+*.cmd text eol=crlf
