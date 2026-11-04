@@ -28,8 +28,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB manquant}
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER manquant}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant}
+      STORAGE_ROOT: /data/storage
     depends_on:
       - db
+    volumes:
+      - ${STORAGE_HOST_PATH:?STORAGE_HOST_PATH manquant}:/data/storage
 
 volumes:
   postgres_data:

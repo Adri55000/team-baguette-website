@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -12,6 +13,8 @@ class Settings:
     postgres_db: str
     postgres_user: str
     postgres_password: str = field(repr=False)
+    storage_root: Path
+    resources_root: Path
 
 
 settings = Settings(
@@ -23,4 +26,7 @@ settings = Settings(
     postgres_db=os.environ["POSTGRES_DB"],
     postgres_user=os.environ["POSTGRES_USER"],
     postgres_password=os.environ["POSTGRES_PASSWORD"],
+
+    storage_root=Path(os.environ["STORAGE_ROOT"]),
+    resources_root=Path(__file__).resolve().parents[2] / "resources",
 )
