@@ -1,0 +1,10 @@
+name: team-baguette-v2-pi
+
+services:
+  backend:
+    image: ghcr.io/adri55000/tb-v2-backend:${TB_IMAGE_TAG:?TB_IMAGE_TAG manquant}
+    build: !reset null
+
+  frontend:
+    image: ghcr.io/adri55000/tb-v2-frontend:${TB_IMAGE_TAG:?TB_IMAGE_TAG manquant}
+    build: !reset null
