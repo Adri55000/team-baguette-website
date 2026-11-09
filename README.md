@@ -2,7 +2,7 @@
 
 Application web communautaire Team Baguette. Ce dépôt est le **monorepo de la V2**, réunissant le frontend Vue, l'API FastAPI et la configuration Docker.
 
-> **État actuel : socle technique en préparation.** Les environnements DEV et PROD locale sont fonctionnels ; les modules métier, l'authentification Discord et le déploiement sur Raspberry Pi ne sont pas encore implémentés.
+> **État au 9 novembre 2026 : socle technique déployé.** Les environnements DEV et PROD locale fonctionnent sur PC, et la V2 est accessible sur le Raspberry Pi à [dev.teambaguette.fr](https://dev.teambaguette.fr), en parallèle de la V1. Le déploiement, HTTPS et les sauvegardes automatiques ont été testés. Les fonctionnalités métier et l'authentification Discord ne sont pas encore développées.
 
 ## Stack technique
 
@@ -14,9 +14,10 @@ Application web communautaire Team Baguette. Ce dépôt est le **monorepo de la 
 | Administration BDD | Adminer (outil de développement facultatif) |
 | Frontend en production | Nginx servant le build Vue et relayant `/api/` |
 | Conteneurisation | Docker et Docker Compose |
+| Publication ARM64 | GitHub Actions et GitHub Container Registry (GHCR) |
 | Temps réel | Contrat de publication préparé ; SSE non implémenté à ce stade |
 
-Les images Docker sont référencées par digest et les dépendances sont verrouillées via `backend/requirements.lock.txt` et `frontend/package-lock.json`. Toute mise à jour doit être volontaire et testée.
+Les images de base Docker sont référencées par digest et les dépendances sont verrouillées via `backend/requirements.lock.txt` et `frontend/package-lock.json`. Les images applicatives destinées au Pi sont publiées dans GHCR avec un tag basé sur le SHA du commit Git. Toute mise à jour doit être volontaire et testée.
 
 ## Organisation du dépôt
 
@@ -50,6 +51,13 @@ team-baguette-website/
 ├── compose.yaml                         # Services communs
 ├── compose.dev.yaml                     # Surcharges DEV : Vite, rechargement, ports
 ├── compose.prod.yaml                    # Surcharges PROD : Nginx, port local
+├── compose.pi.yaml                      # Surcharges Raspberry Pi : images ARM64 GHCR
+├── .github/workflows/
+│   └── publish-images.yml               # Build et publication ARM64 sur main
+├── docs/
+│   ├── sauvegardes-locales.md           # Sauvegardes DEV et PROD locale
+│   ├── deploiement-pi.md                # Déploiement et maintenance du Pi
+│   └── restauration-pi.md               # Sauvegardes et reprise après incident sur le Pi
 ├── .env.example                         # Modèle de configuration, sans secret
 └── .gitattributes                       # Normalisation des fins de ligne
 ```
@@ -87,7 +95,7 @@ Modifier ensuite **les deux fichiers**, qui ne doivent jamais être commités :
 
 **Important :** une base PostgreSQL déjà initialisée conserve ses identifiants internes. Modifier `POSTGRES_PASSWORD` dans un `.env` ne change pas automatiquement le mot de passe du compte PostgreSQL existant.
 
-Les chemins ci-dessus concernent le PC de développement. Sur le Raspberry Pi, l'emplacement du stockage et la configuration de déploiement seront adaptés lors d'un chantier ultérieur.
+Les chemins ci-dessus concernent le PC de développement. Sur le Raspberry Pi, le dépôt est installé dans `/srv/team-baguette-v2`, le stockage persistant dans `/srv/team-baguette-v2-data/storage`, et les paramètres secrets restent dans le fichier local `.env.prod` (non versionné). Voir [Déploiement sur Raspberry Pi](docs/deploiement-pi.md).
 
 ## Démarrer le développement
 
@@ -123,19 +131,33 @@ Accès : <http://127.0.0.1:8081>.
 
 Cette configuration démarre un projet Docker **distinct** (`team-baguette-v2-prod`), avec sa propre base PostgreSQL et son propre stockage. Le frontend est compilé puis servi par Nginx. Le backend et PostgreSQL n'exposent pas de port directement sur l'hôte.
 
-**Attention :** « PROD » désigne ici le mode de fonctionnement compilé, testé localement. Ce n'est **pas encore** la configuration publique finale du Raspberry Pi (HTTPS, reverse proxy externe, sauvegardes, durcissement et déploiement restent à terminer).
+**Attention :** « PROD locale » désigne ici le mode de fonctionnement compilé, testé sur le PC. Le déploiement Raspberry Pi utilise les mêmes fichiers Compose de base, complétés par `compose.pi.yaml`, des images ARM64 publiées dans GHCR et un Nginx hôte avec HTTPS. Voir [Déploiement sur Raspberry Pi](docs/deploiement-pi.md).
 
 ## Communication entre les services
 
 - **Développement :** le navigateur appelle `/api/...` sur le port `5173`, et le proxy Vite relaie vers `http://backend:8000` dans le réseau Docker.
 - **Production locale :** le navigateur appelle `/api/...` sur le port `8081`, et Nginx relaie vers `http://backend:8000`.
+- **Raspberry Pi :** le Nginx de l'hôte termine HTTPS sur `dev.teambaguette.fr` et transmet les requêtes au frontend Docker sur `127.0.0.1:8081`. Le Nginx du frontend sert Vue et relaie `/api/` vers FastAPI. Le backend et PostgreSQL ne publient pas de port sur l'hôte. La V1 et Archipelago continuent de fonctionner séparément.
 - **Backend :** SQLAlchemy rejoint PostgreSQL via le nom de service Docker `db` sur le port interne `5432`.
 
 Le frontend utilise donc des chemins relatifs (`fetch('/api/health')`) dans les deux environnements, sans adresse API codée en dur.
 
-## Commandes de maintenance
+## Déploiement sur Raspberry Pi
 
-Toutes les commandes sont à lancer depuis la racine du dépôt.
+La V2 est déployée sur le Raspberry Pi de développement à [dev.teambaguette.fr](https://dev.teambaguette.fr), sans remplacer la V1 accessible sur `teambaguette.fr`.
+
+À chaque `push` sur `main`, `.github/workflows/publish-images.yml` construit et publie deux images `linux/arm64` dans GHCR. Sur le Pi, le déploiement consiste à synchroniser le dépôt, sélectionner dans `.env.prod` le tag `TB_IMAGE_TAG=sha-<SHA_GIT_COMPLET>`, puis à effectuer `docker compose pull` et `up -d --no-build` avec `compose.yaml`, `compose.prod.yaml` et `compose.pi.yaml`. **Aucune compilation de la V2 n'est nécessaire sur le Pi.**
+
+Les procédures détaillées et les contrôles après mise à jour sont documentés ici :
+
+- [Déploiement, maintenance et retour arrière sur le Pi](docs/deploiement-pi.md).
+- [Sauvegardes et restauration sur le Pi](docs/restauration-pi.md).
+
+Les éléments propres à l'hôte (Nginx externe, Certbot, cron, script de sauvegarde et secrets) ne sont pas tous versionnés sur GitHub. Les fichiers `.env.prod` ne doivent jamais être commités.
+
+## Commandes de maintenance locale
+
+Les commandes ci-dessous concernent **uniquement le PC** (DEV et PROD locale) et sont à lancer depuis la racine du dépôt. Pour le Raspberry Pi, utiliser la [procédure dédiée](docs/deploiement-pi.md).
 
 **État des conteneurs :**
 
@@ -168,24 +190,21 @@ docker compose --env-file .env.prod -f compose.yaml -f compose.prod.yaml down
 
 > **Ne pas utiliser `down -v`** : cette option supprime aussi les volumes du projet, dont les données PostgreSQL. Une reconstruction ou un `down` simple ne doit pas être confondu avec une suppression de données.
 
-Après recréation du backend de production, une réponse `502` du proxy peut nécessiter temporairement le redémarrage du frontend Nginx :
+Après recréation du backend en PROD locale, un `502` transitoire peut apparaître avant que FastAPI soit prêt. Retester `/api/health`, consulter les logs si le problème persiste, puis, si nécessaire, redémarrer le frontend Nginx :
 
 ```powershell
 docker compose --env-file .env.prod -f compose.yaml -f compose.prod.yaml restart frontend
 ```
 
-La résolution durable de ce cas sera examinée avant déploiement public.
+Pour le déploiement Raspberry Pi, le test HTTP doit être fait **après** le démarrage effectif du backend ; un `502` transitoire a été observé puis résolu sans intervention lors d'une mise à jour.
 
-## Sauvegardes et restaurations locales
+## Sauvegardes et restaurations
 
-Les environnements DEV et PROD locale disposent d'un script
-PowerShell de sauvegarde PostgreSQL et du stockage persistant.
+**Sur le PC :** les environnements DEV et PROD locale disposent d'un script PowerShell de sauvegarde de PostgreSQL et du stockage persistant. Les tests et limites sont décrits dans [Sauvegardes locales](docs/sauvegardes-locales.md).
 
-Les procédures, les tests de restauration et leurs limites
-sont documentés dans [Sauvegardes locales](docs/sauvegardes-locales.md).
+**Sur le Raspberry Pi :** une sauvegarde V2 automatique est exécutée à 03 h 30 et copiée sur Windows via WinSCP à 12 h. Chaque archive datée contient `database.dump`, `storage.tar.gz`, `config.tar.gz` et `env.prod.gpg` (secrets chiffrés avec GPG). Le Pi conserve les sept dernières sauvegardes et la synchronisation Windows conserve les copies déjà récupérées. Les tests de sauvegarde, de transfert, de déchiffrement GPG et de restauration isolée ont réussi ; **une reprise complète après panne du Pi reste à tester**. Voir [Sauvegardes et restauration sur le Pi](docs/restauration-pi.md).
 
-L'automatisation et la conservation des sauvegardes sur le
-Raspberry Pi seront préparées lors du déploiement.
+**Protection des données :** à ce stade, seuls les secrets `.env.prod` sont chiffrés ; `database.dump` et `storage.tar.gz` ne le sont pas. Il faudra revoir cette protection avant d'y stocker des données personnelles d'utilisateurs.
 
 ## Base de données et Alembic
 
@@ -240,10 +259,12 @@ docker compose --env-file .env.dev -f compose.yaml -f compose.dev.yaml exec back
 
 Pour vérifier la compilation du frontend, reconstruire son image de production ou lancer `npm run build` dans un environnement Node approprié.
 
-## État des validations
+## État des validations — 9 novembre 2026
 
-**Déjà vérifié localement :** démarrage DEV et PROD, communication Vue → FastAPI → PostgreSQL, indépendance des deux bases et des deux dossiers de stockage, persistance des fichiers après recréation de conteneurs, lecture des ressources versionnées, builds et tests de compatibilité ARM64 préliminaires.
+**Validé sur le PC :** démarrage DEV et PROD locale, communication Vue → FastAPI → PostgreSQL, indépendance des bases et dossiers de stockage, persistance après recréation des conteneurs, accès aux ressources versionnées, builds et tests de restauration isolée.
 
-**Reste à faire avant la mise en ligne :** sauvegardes et restauration éprouvées, sécurité et secrets de déploiement, configuration Nginx/HTTPS sur le Raspberry Pi, cohabitation avec la V1, validation native ARM64 sur le Pi. Les routes de diagnostic, notamment `/api/health/db`, devront aussi faire l'objet d'une revue avant exposition publique.
+**Validé sur le Raspberry Pi :** images Docker ARM64 construites via GitHub Actions et exécutées sur le Pi, cohabitation avec la V1 et Archipelago, Nginx/HTTPS sur `dev.teambaguette.fr`, renouvellement Certbot testé à blanc, redémarrage automatique des trois conteneurs, contrôle des ports, protection Nginx des chemins cachés (`404`), réponses des endpoints de diagnostic et chaîne de sauvegarde V2 jusqu'à Windows. Les archives PostgreSQL et de stockage ont fait l'objet de tests de restauration isolés.
+
+**À valider ou réévaluer ultérieurement :** restauration intégrale après panne du Pi, migrations Alembic et retour arrière avec données métier, surveillance/alertes, protection des futures données personnelles dans les sauvegardes et revue de l'exposition publique de `/api/health/db`. Le dimensionnement mémoire définitif et un éventuel hébergement externe seront examinés sur des charges représentatives, en tenant compte de l'arrêt de la V1 et d'un audit d'Archipelago.
 
 Les fonctionnalités métier (Discord OAuth, utilisateurs, permissions, tournois, restreams, trackers, etc.) ne sont pas encore développées dans la V2.
