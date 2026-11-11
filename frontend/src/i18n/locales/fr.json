@@ -1,0 +1,15 @@
+{
+  "app": {
+    "welcome": "Notre environnement frontend fonctionne !",
+    "testPrimeVue": "Tester PrimeVue",
+    "clicks": "Clics : {count}",
+    "apiConnection": "Connexion à FastAPI",
+    "apiStatus": "État de l'API",
+    "refresh": "Actualiser",
+    "statuses": {
+      "loading": "Chargement...",
+      "ok": "Connectée",
+      "error": "Erreur de connexion"
+    }
+  }
+}
