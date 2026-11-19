@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import { useLanguage } from './i18n/useLanguage'
+import AuthPanel from './components/AuthPanel.vue'
 
 const testDate = ref<Date | null>(new Date())
 
@@ -10,7 +11,6 @@ const compteur = ref(0)
 const apiStatus = ref<'loading' | 'ok' | 'error'>('loading')
 
 const { t, locale, changeLanguage } = useLanguage()
-
 
 async function checkAPI() {
   try {
@@ -85,6 +85,11 @@ onMounted(checkAPI)
        @click="checkAPI"
       />
     </div>
+
+
+
+    <AuthPanel />
+
 
   </main>
 </template>

@@ -11,5 +11,16 @@
       "ok": "Connectée",
       "error": "Erreur de connexion"
     }
+  },
+
+  "auth": {
+    "title": "Authentification",
+    "loading": "Vérification de la connexion...",
+    "connected": "Connecté — utilisateur TB n°{id}",
+    "disconnected": "Non connecté",
+    "error": "Impossible de vérifier la connexion",
+    "login": "Se connecter avec Discord",
+    "logout": "Se déconnecter"
   }
+
 }

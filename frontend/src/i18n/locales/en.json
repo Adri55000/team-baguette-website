@@ -11,5 +11,16 @@
       "ok": "Connected",
       "error": "Connection error"
     }
+  },
+
+  "auth": {
+    "title": "Authentication",
+    "loading": "Checking authentication...",
+    "connected": "Connected — TB user #{id}",
+    "disconnected": "Not connected",
+    "error": "Unable to check authentication",
+    "login": "Sign in with Discord",
+    "logout": "Sign out"
   }
+
 }

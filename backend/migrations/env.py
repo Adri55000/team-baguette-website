@@ -5,6 +5,12 @@ from alembic import context
 
 from app.infrastructure.database.database import Base, database_url, engine
 
+# Charger les modèles pour les enregistrer dans Base.metadata
+from app.modules.players.models import Player, PlayerAlias
+from app.modules.users.models import User
+from app.modules.auth.models import UserSession
+from app.modules.uploads.models import Upload
+
 
 config = context.config
 
